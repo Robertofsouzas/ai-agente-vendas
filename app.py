@@ -17,7 +17,9 @@ EXEMPLOS = [
     "Qual o total de vendas líquidas por mês em 2019?",
     "Quais os 10 produtos mais vendidos em quantidade?",
     "Quais os 5 clientes com maior faturamento líquido em 2020?",
-    "Qual o total de vendas por vendedor?",
+    "Quais porcentagem de top 5 sub_grupo em relação ao faturamento líquido em 2019?",
+    "Quais os 5 estados com maior faturamento líquido em 2020?",
+    "Quais são 10 vendedores com maiores vendas?",
 ]
 
 # ---------------------------------------------------------------------------
@@ -56,17 +58,23 @@ if "messages" not in st.session_state:
 
 def render_assistant_payload(payload: dict, show_sql: bool):
     """Renderiza a resposta do agente dentro de um chat_message."""
-    if not payload["success"]:
-        st.error(payload["message"])
+    if not payload.get("success"):
+        st.error(payload.get("message", "Erro desconhecido."))
         return
 
-    st.markdown(payload["explanation"])
+    if payload.get("explanation"):
+        st.markdown(payload["explanation"])
+
+    if payload.get("insights"):
+        with st.container(border=True):
+            st.caption("Insights")
+            st.text(payload["insights"])
 
     if show_sql and payload.get("sql"):
         with st.expander("Ver SQL gerado"):
             st.code(payload["sql"], language="sql")
 
-    if payload["data"] is not None and not payload["data"].empty:
+    if payload.get("data") is not None and not payload["data"].empty:
         st.dataframe(payload["data"], use_container_width=True)
 
     if payload.get("fig") is not None:
@@ -95,7 +103,7 @@ if pergunta:
 
     with st.chat_message("assistant"):
         with st.spinner("Analisando..."):
-            resultado = run_agent(pergunta, show_sql=show_sql)
+            resultado = run_agent(pergunta)
         render_assistant_payload(resultado, show_sql)
 
     st.session_state.messages.append({"role": "assistant", "payload": resultado})
