@@ -13,19 +13,24 @@ em 2019?"* — e recebe a resposta pronta, com gráfico, em segundos.
 ```mermaid
 flowchart LR
     U([👤 Usuário]) -->|"pergunta em<br/>linguagem natural"| ST[💬 Streamlit]
-    ST --> LLM[🧠 Gemini 3.6 Flash]
+    ST --> LLM[🧠 NVIDIA Nemotron 3 Ultra]
     LLM -->|gera SQL| VAL{🔒 Validação<br/>de segurança}
-    VAL -->|SELECT permitido| DB[(🗄️ SQL Server<br/>Star Schema)]
+    VAL -->|SELECT/CTE permitido| DB[(🗄️ SQL Server<br/>Star Schema)]
     VAL -.->|comando bloqueado| REJ[❌ Rejeitado]
+    DB -->|erro de execução| FIX[🔁 Autocorreção<br/>via LLM]
+    FIX --> VAL
     DB --> PD[🐼 Pandas]
+    PD --> INS[💡 Insights via LLM]
     PD --> VIZ[📊 Plotly]
-    VIZ -->|tabela + gráfico| ST
+    INS --> ST
+    VIZ -->|tabela + insight + gráfico| ST
 ```
 
 - **Interface**: Streamlit (chat)
-- **LLM**: Google Gemini (`gemini-3.6-flash`)
+- **LLM**: NVIDIA NIM — `nvidia/nemotron-3-ultra-550b-a55b`, usado tanto para gerar SQL quanto para gerar insights sobre o resultado
 - **Banco**: SQL Server, modelo dimensional (fato + dimensões)
-- **Camada de segurança**: whitelist de tabelas/colunas + validação de SQL antes da execução (bloqueia `INSERT`, `UPDATE`, `DELETE`, `DROP` etc. — só `SELECT` é permitido)
+- **Camada de segurança**: whitelist de tabelas/colunas + validação de SQL antes da execução (bloqueia `INSERT`, `UPDATE`, `DELETE`, `DROP` etc. — apenas `SELECT` e `WITH` (CTE) são permitidos)
+- **Autocorreção**: se a query gerada falhar na execução (erro de sintaxe, alias inválido), o erro é enviado de volta ao modelo para correção automática, até 2 tentativas
 
 ## Modelo de dados
 
@@ -41,7 +46,7 @@ flowchart LR
 
 - Python 3.10+
 - SQL Server acessível com o Star Schema populado
-- Chave de API do Gemini ([ai.google.dev](https://ai.google.dev))
+- Chave de API da NVIDIA NIM ([build.nvidia.com](https://build.nvidia.com))
 
 ### 2. Clonar e instalar dependências
 
@@ -63,7 +68,7 @@ copy .env.example .env
 ```
 
 ```
-GEMINI_API_KEY=sua_chave_aqui
+NVIDIA_API_KEY=sua_chave_aqui
 SQL_CONNECTION_STRING=sua_connection_string_aqui
 ```
 
@@ -79,7 +84,7 @@ Acesse `http://localhost:8501` no navegador.
 
 ```
 ├── app.py              # Interface Streamlit (chat)
-├── agent_core.py        # Lógica do agente: schema, Gemini, execução SQL, gráficos
+├── agent_core.py        # Lógica do agente: schema, NVIDIA (Nemotron), execução SQL, insights, gráficos
 ├── notebook.ipynb       # Desenvolvimento e testes exploratórios
 ├── requirements.txt
 ├── .env.example
@@ -93,7 +98,6 @@ Acesse `http://localhost:8501` no navegador.
 
 ## Roadmap
 
-- [ ] Migrar geração de SQL para a Interactions API do Gemini (JSON Schema validado nativamente)
 - [ ] Cache de perguntas frequentes
 - [ ] Deploy em produção (Streamlit Community Cloud)
 - [ ] Testes automatizados para `is_safe_sql`
