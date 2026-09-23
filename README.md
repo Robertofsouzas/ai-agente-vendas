@@ -1,18 +1,25 @@
-
 # Agente de IA para Análise de Vendas
 
-Agente conversacional que responde perguntas em linguagem natural sobre vendas, convertendo-as automaticamente em consultas SQL validadas contra um Data Warehouse em modelo dimensional (Star Schema).
+Agente de IA que traduz perguntas de negócio em português para SQL validado,
+executa contra um Data Warehouse dimensional (Star Schema) e devolve tabela
++ visualização automaticamente — sem que o usuário escreva uma linha de SQL.
 
-Pergunte "Qual o total de vendas líquidas por mês em 2019?" e o agente gera o SQL, executa com segurança no banco, e devolve tabela + gráfico automaticamente.
+Em vez de esperar um analista rodar uma query, qualquer pessoa da empresa
+pergunta em linguagem natural — *"Qual o total de vendas líquidas por mês
+em 2019?"* — e recebe a resposta pronta, com gráfico, em segundos.
 
 ## Arquitetura
 
-```
-Usuário → Streamlit (chat) → Gemini (NL → SQL) → Validação de segurança
-                                                        ↓
-                                              SQL Server (Star Schema)
-                                                        ↓
-                                       Pandas + Plotly (tabela + gráfico)
+```mermaid
+flowchart LR
+    U([👤 Usuário]) -->|"pergunta em<br/>linguagem natural"| ST[💬 Streamlit]
+    ST --> LLM[🧠 Gemini 3.6 Flash]
+    LLM -->|gera SQL| VAL{🔒 Validação<br/>de segurança}
+    VAL -->|SELECT permitido| DB[(🗄️ SQL Server<br/>Star Schema)]
+    VAL -.->|comando bloqueado| REJ[❌ Rejeitado]
+    DB --> PD[🐼 Pandas]
+    PD --> VIZ[📊 Plotly]
+    VIZ -->|tabela + gráfico| ST
 ```
 
 - **Interface**: Streamlit (chat)
@@ -94,4 +101,3 @@ Acesse `http://localhost:8501` no navegador.
 ## Autor
 
 Roberto Souza (Beto) — BI Data Analyst & Analytics Engineer
-
