@@ -1,3 +1,4 @@
+
 # Agente de IA para Análise de Vendas
 
 Agente conversacional que responde perguntas em linguagem natural sobre vendas, convertendo-as automaticamente em consultas SQL validadas contra um Data Warehouse em modelo dimensional (Star Schema).
@@ -93,3 +94,4 @@ Acesse `http://localhost:8501` no navegador.
 ## Autor
 
 Roberto Souza (Beto) — BI Data Analyst & Analytics Engineer
+
